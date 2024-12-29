@@ -1,48 +1,37 @@
 use bevy::prelude::*;
+use bevy::window::{Window, WindowMode, WindowResolution};
 
-#[derive(Component)]
-struct Person;
-
-#[derive(Component)]
-struct Name(String);
-
-#[derive(Resource)]
-struct GreetTimer(Timer);
-
-fn hello_world() {
-    println!("Hello World");
-}
-
-fn add_people(mut commands: Commands) {
-    commands.spawn((Person, Name("Elaina Proctor".to_string())));
-    commands.spawn((Person, Name("Renzo Hume".to_string())));
-    commands.spawn((Person, Name("Zayna Nieves".to_string())));
-}
-
-fn greet_people(time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<&Name, With<Person>>) {
-    // update our timer with the time elapsed since the last update
-    // if that caused the timer to finish, we say hello to everyone
-    if timer.0.tick(time.delta()).just_finished() {
-        for name in &query {
-            println!("hello {}!", name.0);
-        }
-    }
-}
-
-fn update_people(mut query: Query<&mut Name, With<Person>>) {
-    for mut name in &mut query{
-        if name.0 == "Elaina Proctor" {
-            name.0 = "Elaina Hume".to_string();
-            break; // We don't need to change any other names.
-        }
-    }
-}
+const BOMBER_MAN_PLAYER_SPRITE: &str = "BomberManSprite_0.png";
+const PLAYER_SIZE: (f32, f32) = (16.0, 16.0);
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .insert_resource(GreetTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
-        .add_systems(Startup, add_people)
-        .add_systems(Update, ((greet_people, update_people).chain()))
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Bomberman Game(Extreme Mode)".to_string(), // Set the window title
+                resolution: WindowResolution::new(1280.0, 720.0),  // Set the resolution
+                mode: WindowMode::Windowed,                        // Windowed mode
+                decorations: true,                                 // Enable window decorations
+                transparent: false,                                // Disable transparency
+                ..default()                                        // Use default values for the rest
+            }),
+            ..default()
+        }))
+        // .insert_resource(ClearColor(Color::srgb(0.4, 0.4, 0.4)))
+        .add_systems(Startup, setup)
         .run();
+}
+
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(Camera2dBundle::default());
+
+    // Add an example player sprite (for context)
+    commands.spawn(SpriteBundle {
+        texture: asset_server.load(BOMBER_MAN_PLAYER_SPRITE),
+        transform: Transform {
+            scale: Vec3::new(2.0, 2.0, 0.0),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
 }
